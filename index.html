@@ -1,8 +1,68 @@
+<header>
+  <link rel="stylesheet" type="text/css" href="../node_modules/materialize-css/dist/css/materialize.min.css"  />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script type="text/javascript" src="../node_modules/materialize-css/dist/js/materialize.min.js"></script>
+</header>
 <form action="index.html" method="post">
-
   <h1>Company Elasticsearch</h1>
 
-  <fieldset>
+  <div class="row">
+    <form class="col s12">
+      <div class="row">
+        <div class="input-field col s6">
+            <i class="small material-icons">flag</i>Select A Country
+            <select id="country">
+                <option value="" disabled selected>Choose your option</option>
+                <option value="SE">Sweden</option>
+                <option value="DK">Denmark</option>
+                <option value="NO">Norway</option>
+                <option value="DE">Germany</option>
+              </select>
+              <br>
+          <input placeholder="Company name" id="company_name" type="text" class="autocomplete">
+          <!-- <label for="first_name">Company Name</label> -->
+        </div>
+        <br>
+        <div class="input-field col s6">
+          <label for="vatNo">Vat No:</label>
+          <input type="text" id="vatNo"></input>   
+          <label for="address">Address:</label>
+          <input type="text" id="address"></input>   
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12">
+          <input disabled value="I am not editable" id="disabled" type="text" class="validate">
+          <label for="disabled">Disabled</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12">
+          <input id="password" type="password" class="validate">
+          <label for="password">Password</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12">
+          <input id="email" type="email" class="validate">
+          <label for="email">Email</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s12">
+          This is an inline input field:
+          <div class="input-field inline">
+            <input id="email_inline" type="email" class="validate">
+            <label for="email_inline">Email</label>
+            <span class="helper-text" data-error="wrong" data-success="right">Helper text</span>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+
+  <fieldset class=".input-field">
     <legend><span class="formlegend">Elasticsearch</span></legend>
 
     <select id = "country">

@@ -22,10 +22,32 @@ app.get('/', function (request, response) {
     // get_companies('SE', 'colum', token)
 });
 
-function get_company(id) {
+
+app.get('/getCompanies', async (request, response) => {
+    if (token === undefined || await is_soon_to_be_expired()) 
+        token = await get_new_token()
+
+    let companylist = await get_companies(request.query.country, request.query.fulltext, token)
+    response.json(companylist)
+    
+    // console.log(request)
+    // companies = get_companies(request.query.country, request.query.fulltext, token)
+    // response.json(companies);
+
+    // get_companies('SE', 'colum', token)
+});
+
+app.get('/getCompany', async (request, response) => {
+    if (token === undefined || await is_soon_to_be_expired()) 
+        token = await get_new_token()
+       
+    let company = await get_company(request.query.id, token)
+    response.json(company)
+});
+
+const get_company = async (id, token) => {
     params = {id: id}
     const paramString = new URLSearchParams(params)
-    // url = `https://api.bisnode.com/bbc/v2/companies/${paramString.toString()}`;
     url = `https://api.bisnode.com/bbc/v2/companies/${id}`;
     const options = {
         url: url,
@@ -46,11 +68,12 @@ function get_company(id) {
 
 
         let json = JSON.parse(body);
-        console.log(json);
+        return json
+        // console.log(json);
     });
 }
 
-function get_companies(country, inputtext) {
+const get_companies = async (country, inputtext, token) => {
     const params = { country: country, fulltext: inputtext }
     const paramString = new URLSearchParams(params)
 
@@ -74,15 +97,14 @@ function get_companies(country, inputtext) {
 
 
         let json = JSON.parse(body);
-        console.log(json);
-        get_company(json.companies[0].id);
+        return json
     });
-};
+
+}
 
 
-
-function get_new_token() {
-
+const get_new_token = async() => {
+ return new Promise((resolve, reject) => {
     let body = querystring.stringify({
         "grant_type": cred['grant_type'],
         "scope": cred['scope'],
@@ -110,16 +132,12 @@ function get_new_token() {
             new_token = JSON.parse(body)
             new_token.expiration_timestamp = Date.now() + new_token['expires_in'];
             token = new_token
-            get_companies('SE', 'col', token)
-            // save_token(new_token)
+            resolve(token)
         });
+  })
 }
 
-function save_token(new_token) {
-    token = new_token
-}
-
-function is_soon_to_be_expired() {
+const is_soon_to_be_expired = async() => {
     // Add time margin to avoid token expiring during call (1 min)
     if (Date.now() + 60000 >= token.expiration_timestamp)
         return true
