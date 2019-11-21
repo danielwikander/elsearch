@@ -1,4 +1,5 @@
 var request = require('request');
+var rp = require('request-promise');
 var cred = require('./secrets.json');
 var querystring = require('querystring');
 const express = require('express');
@@ -7,47 +8,35 @@ var cookieParser = require('cookie-parser');
 const app = new express();
 app.use(cookieParser());
 
-var token;
+let token;
 
 const server = app.listen(8080, () => {
     console.log(`Express running → PORT ${server.address().port}`);
 });
 
-app.get('/', function (request, response) {
+app.get('/', async (request, response) => {
     response.sendFile('./index.html', { root: __dirname});
-
-    if (token === undefined || is_soon_to_be_expired()) {
-        get_new_token();
-    }
-    // get_companies('SE', 'colum', token)
+    await refresh_token().catch(error => console.log(error))
+    // let comp = await get_companies('SE', 'colu', token).catch(error => console.log(error))
+    // console.log(comp)
 });
 
 
 app.get('/getCompanies', async (request, response) => {
-    if (token === undefined || await is_soon_to_be_expired()) 
-        token = await get_new_token()
-
-    let companylist = await get_companies(request.query.country, request.query.fulltext, token)
-    response.json(companylist)
-    
-    // console.log(request)
-    // companies = get_companies(request.query.country, request.query.fulltext, token)
-    // response.json(companies);
-
-    // get_companies('SE', 'colum', token)
+    await refresh_token().catch(error => console.log(error))
+    let companylist = await get_companies(request.query.country, request.query.fulltext, token).catch((error) => console.log(error))
+    await response.json(companylist).catch(error => console.log(error))
 });
 
 app.get('/getCompany', async (request, response) => {
-    if (token === undefined || await is_soon_to_be_expired()) 
-        token = await get_new_token()
-       
-    let company = await get_company(request.query.id, token)
-    response.json(company)
+    await refresh_token().catch(error => console.log(error))
+    let company = await get_company(request.query.id, token).catch((error) => console.log(error))
+    await response.json(company)
 });
 
-const get_company = async (id, token) => {
+const get_company = async (id, token) => new Promise((resolve, reject) => {
     params = {id: id}
-    const paramString = new URLSearchParams(params)
+    // const paramString = new URLSearchParams(params)
     url = `https://api.bisnode.com/bbc/v2/companies/${id}`;
     const options = {
         url: url,
@@ -59,21 +48,20 @@ const get_company = async (id, token) => {
         }
     }
     request(options, function (err, res, body) {
-        // if (err) 
-            // console.log(err)
+        if (err) 
+            reject(err)
 
         // if(res) 
             // console.log(res)
         // console.log(body)
 
-
         let json = JSON.parse(body);
-        return json
-        // console.log(json);
+        console.log(json)
+        resolve(json)
     });
-}
+});
 
-const get_companies = async (country, inputtext, token) => {
+const get_companies = async (country, inputtext, token) => new Promise((resolve, reject) => {
     const params = { country: country, fulltext: inputtext }
     const paramString = new URLSearchParams(params)
 
@@ -85,61 +73,96 @@ const get_companies = async (country, inputtext, token) => {
             'Accept': "application/hal+json;charset=UTF-8",
             'Accept-Charset': 'utf-8',
             'Authorization': token.token_type + ' ' + token.access_token
-        }
+        },
+        json: true
     }
-    request(options, function (err, res, body) {
-        // if (err) 
-            // console.log(err)
+    rp(options).then(async(response) => {
+        resolve(response)
+    }).catch(err => reject(err))
 
-        // if(res) 
-            // console.log(res)
-        // console.log(body)
+    // request(options, function (err, res, body) {
+    //     if (err) {
+    //         reject(err)
+    //     }
+    //     // if(res) 
+    //         // console.log(res)
+    //     // console.log(body)
 
+    //     let json = JSON.parse(body);
+    //     resolve(json)
+    // });
+});
 
-        let json = JSON.parse(body);
-        return json
-    });
-
-}
-
-
-const get_new_token = async() => {
- return new Promise((resolve, reject) => {
+const get_new_token = async() => new Promise((resolve, reject) => {
     let body = querystring.stringify({
         "grant_type": cred['grant_type'],
         "scope": cred['scope'],
         "client_id": cred['client_id'],
         "client_secret": cred['client_secret']
-    })
-
+    });
     let options = {
         "url": 'https://login.bisnode.com/as/token.oauth2',
         "method": 'POST',
         "headers": {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: body
-    }
-    var new_token
-    request.post(options,
-        function (error, response, body) {
-            if (error) {
-                console.error(error)
-                return
-            }
-            console.log(`statusCode: ${response.statusCode}`)
+        body: body,
+        json: true
+    };
+    rp(options).then(async(body) => {
+        token = body
+        token.expiration_timestamp = Date.now() + body['expires_in']
+        console.log(token)
+        resolve(token)
+    }).catch(error => reject(error))
+    // var new_token;
+    // request.post(options, function (error, response, body) {
+    //     if (error) {
+    //         console.log("GETTOKEN ERROR")
+    //         reject(error)
+    //     }
+    //     console.log(`statusCode: ${response.statusCode}`);
+    //     new_token = JSON.parse(body);
+    //     new_token.expiration_timestamp = Date.now() + new_token['expires_in'];
+    //     token = new_token;
+    //     console.log("GETTOKEN SUCCESS, TOKEN: ")
+    //     console.log(token);
+    //     resolve(token);
+    // });
+});
 
-            new_token = JSON.parse(body)
-            new_token.expiration_timestamp = Date.now() + new_token['expires_in'];
-            token = new_token
-            resolve(token)
-        });
-  })
-}
+const refresh_token = async() => new Promise((resolve,reject) => {
+    if (token === undefined || Date.now() + 6000 <= token.expiration_timestamp)
+        get_new_token().then(resolve()).catch(reject(reason))
+    else 
+        resolve()
+});
 
-const is_soon_to_be_expired = async() => {
-    // Add time margin to avoid token expiring during call (1 min)
-    if (Date.now() + 60000 >= token.expiration_timestamp)
-        return true
-    return false
-}
+// async function is_token_valid() {
+//     await new Promise((resolve, reject) => {
+//         if (token === undefined || Date.now() + 6000 <= token.expiration_timestamp)
+//             reject()
+//         else 
+//             resolve()
+//     })
+// }
+// async function is_soon_to_be_expired() {
+//     await new Promise((resolve, reject) => {
+//         if (Date.now() + 60000 >= token.expiration_timestamp)
+//             resolve()
+//         else 
+//             reject()
+//     })
+    // if (Date.now() + 60000 >= token.expiration_timestamp)
+    //     await new Promise(resolve, true);
+    //     // return true
+    // await new Promise(reject, false);
+    // // return false
+// }
+
+// const is_soon_to_be_expired = async() => {
+//     // Add time margin to avoid token expiring during call (1 min)
+//     if (Date.now() + 60000 >= token.expiration_timestamp)
+//         return true
+//     return false
+// }
