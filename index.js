@@ -1,13 +1,11 @@
-var request = require('request');
-var rp = require('request-promise');
-var cred = require('./secrets.json');
-var querystring = require('querystring');
-const express = require('express');
-var cookieParser = require('cookie-parser');
+const express    = require('express');
+var rp           = require('request-promise');
+var cred         = require('./secrets.json');
+var querystring  = require('querystring');
+var path         = require('path');
 
 const app = new express();
-app.use(cookieParser());
-
+app.use(express.static(path.join(__dirname, 'frontend')));
 let token;
 
 const server = app.listen(8080, () => {
@@ -15,7 +13,7 @@ const server = app.listen(8080, () => {
 });
 
 app.get('/', async (request, response) => {
-    response.sendFile('./index.html', { root: __dirname});
+    response.sendFile(path.resolve('./frontend/index.html'));
     await refresh_token().catch(error => console.log(error))
     // let comp = await get_companies('SE', 'colu', token).catch(error => console.log(error))
     // console.log(comp)
@@ -23,9 +21,15 @@ app.get('/', async (request, response) => {
 
 
 app.get('/getCompanies', async (request, response) => {
+    console.log("Recieved request for companies:")
+    console.log(request.query.country)
+    console.log(request.query.fulltext)
+    console.log(" ")
     await refresh_token().catch(error => console.log(error))
     let companylist = await get_companies(request.query.country, request.query.fulltext, token).catch((error) => console.log(error))
-    await response.json(companylist).catch(error => console.log(error))
+    await response.json(companylist) //.catch(error => console.log(error))
+    console.log("RETURNED :")
+    console.log(companylist)
 });
 
 app.get('/getCompany', async (request, response) => {
