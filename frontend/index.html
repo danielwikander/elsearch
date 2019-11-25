@@ -8,22 +8,74 @@
 
 <body>
 
-  <h1>Company Elasticsearch</h1>
-  <div class="col s4 center search input-field">
-    <label>Choose country:</label>
-    <select id="country" class="browser-default">
-      <option value="SE" selected>Sweden</option>
-      <option value="DK">Denmark</option>
-      <option value="NO">Norway</option>
-      <option value="DE">Germany</option>
-    </select>
+  <div class="container input-field">
+    <h1>Company Elasticsearch</h1>
 
-    <label for="autocomplete">Company name_test:</label>
-    <input type="text" id="autocomplete" class="autocomplete">
+    <div class="row">
+      <div class="col s3">
+        <label>Choose country:</label>
+        <select id="country" class="browser-default">
+          <option value="SE" selected>Sweden</option>
+          <option value="DK">Denmark</option>
+          <option value="NO">Norway</option>
+          <option value="DE">Germany</option>
+        </select>
+      </div>
 
-    <label for="company_name">Company name:</label>
-    <input type="text" id="company_name" class="autocomplete">
-  </div>d
+      <div class="col s9">
+        <label for="company_name">Company name:</label>
+        <input type="text" id="company_name" class="autocomplete">
+      </div>
+    </div>
+
+    <div class="row"><br></div> 
+
+    <div class="row">
+      <div class="col s6">
+        <label for="vatNo">Vat No:</label>
+        <input disabled type="text" id="vatNo"></input>
+      </div>
+      <div class="col s6">
+        <label for="address">Address:</label>
+        <input disabled type="text" id="address"></input>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col s6">
+        <label for="zipcode">Zipcode:</label>
+        <input disabled type="text" id="zipcode"></input>
+      </div>
+      <div class="col s6">
+        <label for="city">City:</label>
+        <input disabled type="text" id="city"></input>
+      </div>
+    </div>
+
+    <div class=row>
+      <div class="col s6">
+        <label for="legal_type">Legal type:</label>
+        <input disabled type="text" id="legal_type"></input>
+      </div>
+      <div class="col s6">
+        <label for="turnover">Turnover:</label>
+        <input disabled type="text" id="turnover"></input>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col s6">
+        <label for="business_type">Business type:</label>
+        <input disabled type="text" id="business_type"></input>
+      </div>
+      <div class="col s6">
+        <label for="number_of_employees">Number of employees:</label>
+        <input disabled type="text" id="number_of_employees"></input>
+      </div>
+    </div>
+    <button type="submit">Button</button>
+
+  </div>
 </body>
 
 <!--<form action="index.html" method="post">

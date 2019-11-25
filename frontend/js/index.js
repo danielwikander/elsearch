@@ -1,80 +1,27 @@
-
-// document.getElementById('company_name').addEventListener('input', () => searchCompanies(company_name.value));
-
-// document.addEventListener('DOMContentLoaded', function() {
-//   var elems = document.querySelectorAll('select');
-//   var instances = M.FormSelect.init(elems, options);
-// });
-
-// document.getElementById('company_name').addEventListener('input', () =>
-//     $(function () {
-//     console.log('input event listener activated')
-//         $.ajax({
-//             type: 'GET',
-//             url: '/getCompanies' +
-//                 '?country=' + document.getElementById("country").value +
-//                 '?fulltext=' + document.getElementById("company_name").value,
-//             success: function (response) {
-//                 company_list = []
-//                 for (company in response.companies) {
-//                     company_list.push({
-//                         name: company.name,
-//                         id: company.id
-//                     })
-//                 }
-//                 $('input.autocomplete').autocomplete({
-//                     data: company_list
-//                 });
-//             }
-//         });
-//     }
-// ));
-
-// document.addEventListener('DOMContentLoaded', function () {
-//         var data =  {
-//             "Apple": null,
-//             "Microsoft": null,
-//             "Google": 'https://placehold.it/250x250'
-//         }
-//     var elems = document.querySelectorAll('.autocomplete');
-//     var instances = M.Autocomplete.init(elems, data);
-// });
-
+var current_autocomplete_companies = {}
 
 $(document).ready(function () {
-    // var elems = document.querySelectorAll('.autocomplete');
-    // var instance = M.Autocomplete.init(elems, options);
-
-    // $('select').formSelect();
-    // $('.modal').modal();
-
-    // $('input.autocomplete').autocomplete({
-    //     data: {
-    //         "Apple": null,
-    //         "Microsoft": null,
-    //         "Google": 'https://placehold.it/250x250'
-    //     },
-    // });
-
-    testdata = {
-        id: "001",
-        text: "companyname"
-    }
-
-    // $('input.company_name').autocomplete({
-    //     data: testdata
-    // });
+    // Add autocomplete element 
     var elem = document.querySelector('.autocomplete');
-    var instance = M.Autocomplete.init(elem, testdata);
-    // var elems = document.querySelectorAll('.autocomplete');
-    // var instances = M.Autocomplete.init(elems, testdata);
+    var instance = M.Autocomplete.init(elem, {});
 
+    $('input.autocomplete').autocomplete({
+        data: {},
+        limit: 5,
+        onAutocomplete: (val) => {
+            getCompany(val)
+        }
+    });
+
+    // Add eventlistener on textfield for autocomplete
     document.getElementById('company_name').addEventListener('input', () =>
         $(function () {
-            if (document.getElementById('company_name').value.length < 4)
+            if (document.getElementById('company_name').value.length < 4) {
                 return
+            }
 
-            console.log('input event listener activated')
+            // Request companies from backend
+            console.log("Making get request..")
             $.ajax({
                 type: 'GET',
                 url: 'http://localhost:8080/getCompanies',
@@ -83,77 +30,152 @@ $(document).ready(function () {
                     "fulltext": document.getElementById("company_name").value,
                 },
                 success: function (response) {
-                    // console.log(response)
-                    // console.log(response.companies)
-                    company_list = []
+                    console.log("Response retrieved successfully...")
+                    current_autocomplete_companies = response.companies
+                    var companies = {}
                     for (var i = 0; i < response.companies.length; i++) {
-                        company_list.push({
-                            text: response.companies[i].name,
-                            id: response.companies[i].id
-                        })
-                        // company_list.push(response.companies[i])
+                        companies[response.companies[i].name] = null // response.companies[i].id
+                        // if (!response.companies[i] in current_autocomplete_companies) {
+                            // console.log("ADDING TO current")
+                            // current_autocomplete_companies.push(response.companies[i])
+                        // }
                     }
-                    console.log(company_list)
-                    // for (company in response.companies) {
-                    //     console.log(company.name)
-                    //     console.log(company.id)
-                    // company_list.push({
-                    //     name: company.name,
-                    //     id: company.id
-                    // })
-                    // }
-                    testdata = {
-                        id: "001",
-                        text: "companyname"
+                    // console.log("current in get request")
+                    // console.log(current_autocomplete_companies)
+
+                    // $('input.autocomplete').autocomplete({
+                    //     data: companies,
+                    //     limit: 5,
+                    //     onAutocomplete: (val) => {
+                    //         console.log("onAutocomplete()")
+                    //         for (let company in response.companies) {
+                    //             if (company.name == val)
+                    //                 fillForm(company)
+                    //             break
+                    //         }
+                    //     }
+                    // });
+
+                    $('input.autocomplete').autocomplete("updateData", companies);
+                    var elem = document.querySelector('.autocomplete');
+                    var instance = M.Dropdown.getInstance(elem);
+                    // instance.updateData(companies);
+                    if (instance) {
+                        if (!instance.isOpen)
+                            instance.open();
+                        instance.recalculateDimensions();
                     }
-                    $('input.autocomplete').autocomplete({
-                        data: company_list
-                    });
                 }
             });
-        }
-        ));
-
-    // TEST
-    //     $(function () {
-    //         $.ajax({
-    //             type: 'GET',
-    //             url: '/getCompanies' +
-    //                 '?country=' + document.getElementById("country").value +
-    //                 '?fulltext=' + document.getElementById("company_name").value,
-    //             success: function (response) {
-    //                 company_list = []
-    //                 for (company in response.companies) {
-    //                     company_list.push({
-    //                         name: company.name,
-    //                         id: company.id
-    //                     })
-    //                 }
-    //                 $('input.autocomplete').autocomplete({
-    //                     data: company_list
-    //                 });
-    //             }
-    //         });
-    //     });
+        })
+    );
 });
-function getId() {
-    alert($('#company').data('id'));
+
+var TESTDATA = {
+    "$schema": "https://api.bisnode.com/bbc/v2/schemas/company.schema.json",
+    "$lastModified": "2019-05-24T19:07:22.084Z",
+    "name": "Apple Import",
+    "country": {
+        "code": "SE",
+        "name": "Sweden"
+    },
+    "status": {
+        "code": "ST90",
+        "name": "Not yet active"
+    }, "type": {
+        "code": "TY99",
+        "name": "Unknown"
+    },
+    "registrationDate": "1985-11-18",
+    "nationalRegistrationNumber": "5905120316",
+    "vatNo": "SE590512031601",
+    "legalForm": {
+        "code": "JF10",
+        "name": "Propriotorship"
+    },
+    "business": {
+        "activities": {
+            "mainActivity": {
+                "code": "HG0000900",
+                "description": "Main industry unknown"
+            },
+            "subActivities": [],
+            "local": {
+                "mainActivity": {
+                    "code": "HG0000900",
+                    "description": "Unknown"
+                },
+                "subActivities": [
+                    {
+                        "code": "OV990",
+                        "description": "Class unknown"
+                    }
+                ]
+            }
+        },
+        "numberOfEmployees": {
+            "code": "AA99",
+            "name": "Unknown"
+        },
+        "numberOfOfficeEmployees": {
+            "code": "KA01",
+            "name": "0"
+        }
+    },
+    "addressSource": "PARAD, 169 93 Solna, Sweden",
+    "id": "1:102725275",
+    "_links": {
+        "self": {
+            "href": "https://api.bisnode.com/bbc/v2/companies/1:102725275"
+        }
+    }
 }
 
-// function searchCompanies(companyName) {
-//     if (companyName.length < 3)
-//         return
+function getCompany(company_name) {
+    // let company_name = document.getElementById('company_name').value;
+    var company_to_get;
+    console.log(current_autocomplete_companies)
+    for (let i = 0; i < current_autocomplete_companies.length; i++) {
+        console.log(current_autocomplete_companies[i].name)
+        if (current_autocomplete_companies[i].name == company_name) {
+            company_to_get = current_autocomplete_companies[i];
+            console.log("FOUND MATCH")
+            break;
+        }
+    }
 
-//     let country = document.getElementById('country').value
-//     export const getCompanies = () => {
-//         return fetch('http://localhost:8080/getCompanies', {
-//             method: 'GET'
-//         }).then((response) => {
-//             console.log(response);
-//         })
-//     };
+    console.log(company_to_get)
+    // Get company from backend
+    // FUNCTIONAL - USE TEST DATA IN THE MEANTIME
+    $.ajax({
+        type: 'GET',
+        url: 'http://localhost:8080/getCompany',
+        data: {
+            "id": company_to_get.id // TODO: Cannot read prop ID of undefined? 
+        },
+        success: function (response) {
+            console.log("Company retrieved successfully...")
+            console.log(response)
+            fill_form(JSON.parse(response))
+        }
+    });
+    // fill_form(TESTDATA)
+}
 
-// }
+
+
+function fill_form(company) {
+    console.log(company)
+    document.getElementById('vatNo').value = company['vatNo'];
+    document.getElementById('address').value = company['addressSource'];
+    // document.getElementById('zipcode').value = company.zipcode; // ?
+    // document.getElementById('city').value = company.city;// ?
+    document.getElementById('legal_type').value = company['legalForm']['name'];
+    // document.getElementById('turnover').value = company.turnover;// ?
+    // document.getElementById('business_type').value = company.business.;// ?
+    document.getElementById('number_of_employees').value = company['business']['numberOfEmployees']['name'];
+}
+
 
 const searchcountry = async searchBox => {
     const res = await fetch('../data/countries.json');
@@ -177,56 +199,3 @@ const searchcountry = async searchBox => {
 function fillform(company) {
     document.getElementById('address').value = company.address
 }
-
-// $(function() {
-//     $.ajax({
-//       type: 'GET',
-//       url: 'https://restcountries.eu/rest/v2/all?fields=name',
-//       success: function(response) {
-//         var countryArray = response;
-//         var dataCountry = {};
-//         for (var i = 0; i < countryArray.length; i++) {
-//           //console.log(countryArray[i].name);
-//           dataCountry[countryArray[i].name] = countryArray[i].flag; //countryArray[i].flag or null
-//         }
-//         $('input.autocomplete').autocomplete({
-//           data: dataCountry,
-//           limit: 5, // The max amount of results that can be shown at once. Default: Infinity.
-//         });
-//       }
-//     });
-//   });
-
-// $(".autocomplete").each(function () {
-//     let self = this;
-//     $(this).autocomplete();
-//     $(this).on("input change", function () {
-//         $.ajax({
-//             url: '/getCompanies',
-//             type: 'get',
-//             cache: false,
-//             // getCompanies?country=SE&fulltext=col
-//             data: { country: document.getElementById('country').value,
-//                     fulltext: document.getElementById('company').value},
-//             success: function (companies) {
-
-//                 var companyNameList = {}
-
-
-//                 var countryArray = response;
-//         var dataCountry = {};
-//         for (var i = 0; i < countryArray.length; i++) {
-//           //console.log(countryArray[i].name);
-//           dataCountry[countryArray[i].name] = countryArray[i].flag; //countryArray[i].flag or null
-//         }
-
-
-//                 companies = JSON.parse(companies);
-//                 $(self).autocomplete("updateData", companies/*should be object*/);
-//             },
-//             error: function (err) {
-//                 console.log(err);
-//             }
-//         });
-//     });
-// });

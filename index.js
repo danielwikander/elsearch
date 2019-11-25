@@ -1,8 +1,8 @@
-const express    = require('express');
-var rp           = require('request-promise');
-var cred         = require('./secrets.json');
-var querystring  = require('querystring');
-var path         = require('path');
+const express = require('express');
+var rp = require('request-promise');
+var cred = require('./secrets.json');
+var querystring = require('querystring');
+var path = require('path');
 
 const app = new express();
 app.use(express.static(path.join(__dirname, 'frontend')));
@@ -15,8 +15,6 @@ const server = app.listen(8080, () => {
 app.get('/', async (request, response) => {
     response.sendFile(path.resolve('./frontend/index.html'));
     await refresh_token().catch(error => console.log(error))
-    // let comp = await get_companies('SE', 'colu', token).catch(error => console.log(error))
-    // console.log(comp)
 });
 
 
@@ -39,7 +37,7 @@ app.get('/getCompany', async (request, response) => {
 });
 
 const get_company = async (id, token) => new Promise((resolve, reject) => {
-    params = {id: id}
+    params = { id: id }
     // const paramString = new URLSearchParams(params)
     url = `https://api.bisnode.com/bbc/v2/companies/${id}`;
     const options = {
@@ -51,19 +49,82 @@ const get_company = async (id, token) => new Promise((resolve, reject) => {
             'Authorization': token.token_type + ' ' + token.access_token
         }
     }
-    request(options, function (err, res, body) {
-        if (err) 
-            reject(err)
+    rp(options).then(async (response) => {
+        resolve(response)
+    }).catch(err => reject(err))
+    // rp(options, function (err, res, body) {
+    //     if (err) 
+    //         reject(err)
 
-        // if(res) 
-            // console.log(res)
-        // console.log(body)
+    //     // if(res) 
+    //         // console.log(res)
+    //     // console.log(body)
 
-        let json = JSON.parse(body);
-        console.log(json)
-        resolve(json)
-    });
+    //     let json = JSON.parse(body);
+    //     console.log(json)
+    //     resolve(json)
+    // });
 });
+
+var TESTDATA = {
+    "$schema": "https://api.bisnode.com/bbc/v2/schemas/company.schema.json",
+    "$lastModified": "2019-05-24T19:07:22.084Z",
+    "name": "Apple Import",
+    "country": {
+        "code": "SE",
+        "name": "Sweden"
+    },
+    "status": {
+        "code": "ST90",
+        "name": "Not yet active"
+    }, "type": {
+        "code": "TY99",
+        "name": "Unknown"
+    },
+    "registrationDate": "1985-11-18",
+    "nationalRegistrationNumber": "5905120316",
+    "vatNo": "SE590512031601",
+    "legalForm": {
+        "code": "JF10",
+        "name": "Propriotorship"
+    },
+    "business": {
+        "activities": {
+            "mainActivity": {
+                "code": "HG0000900",
+                "description": "Main industry unknown"
+            },
+            "subActivities": [],
+            "local": {
+                "mainActivity": {
+                    "code": "HG0000900",
+                    "description": "Unknown"
+                },
+                "subActivities": [
+                    {
+                        "code": "OV990",
+                        "description": "Class unknown"
+                    }
+                ]
+            }
+        },
+        "numberOfEmployees": {
+            "code": "AA99",
+            "name": "Unknown"
+        },
+        "numberOfOfficeEmployees": {
+            "code": "KA01",
+            "name": "0"
+        }
+    },
+    "addressSource": "PARAD, 169 93 Solna, Sweden",
+    "id": "1:102725275",
+    "_links": {
+        "self": {
+            "href": "https://api.bisnode.com/bbc/v2/companies/1:102725275"
+        }
+    }
+}
 
 const get_companies = async (country, inputtext, token) => new Promise((resolve, reject) => {
     const params = { country: country, fulltext: inputtext }
@@ -80,7 +141,7 @@ const get_companies = async (country, inputtext, token) => new Promise((resolve,
         },
         json: true
     }
-    rp(options).then(async(response) => {
+    rp(options).then(async (response) => {
         resolve(response)
     }).catch(err => reject(err))
 
@@ -97,7 +158,7 @@ const get_companies = async (country, inputtext, token) => new Promise((resolve,
     // });
 });
 
-const get_new_token = async() => new Promise((resolve, reject) => {
+const get_new_token = async () => new Promise((resolve, reject) => {
     let body = querystring.stringify({
         "grant_type": cred['grant_type'],
         "scope": cred['scope'],
@@ -113,7 +174,7 @@ const get_new_token = async() => new Promise((resolve, reject) => {
         body: body,
         json: true
     };
-    rp(options).then(async(body) => {
+    rp(options).then(async (body) => {
         token = body
         token.expiration_timestamp = Date.now() + body['expires_in']
         console.log(token)
@@ -135,10 +196,10 @@ const get_new_token = async() => new Promise((resolve, reject) => {
     // });
 });
 
-const refresh_token = async() => new Promise((resolve,reject) => {
+const refresh_token = async () => new Promise((resolve, reject) => {
     if (token === undefined || Date.now() + 6000 <= token.expiration_timestamp)
         get_new_token().then(resolve()).catch(reject(reason))
-    else 
+    else
         resolve()
 });
 
