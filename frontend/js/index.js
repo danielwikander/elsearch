@@ -1,4 +1,4 @@
-var current_autocomplete_companies = {}
+var current_autocomplete_companies = []
 
 $(document).ready(function () {
     // Add autocomplete element 
@@ -17,6 +17,7 @@ $(document).ready(function () {
     document.getElementById('company_name').addEventListener('input', () =>
         $(function () {
             if (document.getElementById('company_name').value.length < 4) {
+                current_autocomplete_companies = []
                 return
             }
 
@@ -31,35 +32,28 @@ $(document).ready(function () {
                 },
                 success: function (response) {
                     console.log("Response retrieved successfully...")
-                    current_autocomplete_companies = response.companies
+                    // current_autocomplete_companies = response.companies
                     var companies = {}
-                    for (var i = 0; i < response.companies.length; i++) {
-                        companies[response.companies[i].name] = null // response.companies[i].id
-                        // if (!response.companies[i] in current_autocomplete_companies) {
-                            // console.log("ADDING TO current")
-                            // current_autocomplete_companies.push(response.companies[i])
-                        // }
-                    }
-                    // console.log("current in get request")
-                    // console.log(current_autocomplete_companies)
 
-                    // $('input.autocomplete').autocomplete({
-                    //     data: companies,
-                    //     limit: 5,
-                    //     onAutocomplete: (val) => {
-                    //         console.log("onAutocomplete()")
-                    //         for (let company in response.companies) {
-                    //             if (company.name == val)
-                    //                 fillForm(company)
-                    //             break
-                    //         }
-                    //     }
-                    // });
+                    // Add response to companylist
+                    for (var i = 0; i < response.companies.length; i++) {
+                        console.log("adding company to list...")
+                        current_autocomplete_companies.push(response.companies[i])
+                    }
+
+                    console.log("current autocomplete:")
+                    console.log(current_autocomplete_companies)
+                    // Create list with only names for autocomplete field
+                    if (current_autocomplete_companies.length > 1) {
+                        for (let i = 0; i < current_autocomplete_companies.length; i++) {
+                            companies[current_autocomplete_companies[i].name] = null 
+                        }
+                    }
 
                     $('input.autocomplete').autocomplete("updateData", companies);
+                    console.log("updated autocomplete...")
                     var elem = document.querySelector('.autocomplete');
                     var instance = M.Dropdown.getInstance(elem);
-                    // instance.updateData(companies);
                     if (instance) {
                         if (!instance.isOpen)
                             instance.open();
@@ -70,66 +64,6 @@ $(document).ready(function () {
         })
     );
 });
-
-var TESTDATA = {
-    "$schema": "https://api.bisnode.com/bbc/v2/schemas/company.schema.json",
-    "$lastModified": "2019-05-24T19:07:22.084Z",
-    "name": "Apple Import",
-    "country": {
-        "code": "SE",
-        "name": "Sweden"
-    },
-    "status": {
-        "code": "ST90",
-        "name": "Not yet active"
-    }, "type": {
-        "code": "TY99",
-        "name": "Unknown"
-    },
-    "registrationDate": "1985-11-18",
-    "nationalRegistrationNumber": "5905120316",
-    "vatNo": "SE590512031601",
-    "legalForm": {
-        "code": "JF10",
-        "name": "Propriotorship"
-    },
-    "business": {
-        "activities": {
-            "mainActivity": {
-                "code": "HG0000900",
-                "description": "Main industry unknown"
-            },
-            "subActivities": [],
-            "local": {
-                "mainActivity": {
-                    "code": "HG0000900",
-                    "description": "Unknown"
-                },
-                "subActivities": [
-                    {
-                        "code": "OV990",
-                        "description": "Class unknown"
-                    }
-                ]
-            }
-        },
-        "numberOfEmployees": {
-            "code": "AA99",
-            "name": "Unknown"
-        },
-        "numberOfOfficeEmployees": {
-            "code": "KA01",
-            "name": "0"
-        }
-    },
-    "addressSource": "PARAD, 169 93 Solna, Sweden",
-    "id": "1:102725275",
-    "_links": {
-        "self": {
-            "href": "https://api.bisnode.com/bbc/v2/companies/1:102725275"
-        }
-    }
-}
 
 function getCompany(company_name) {
     // let company_name = document.getElementById('company_name').value;
@@ -146,12 +80,11 @@ function getCompany(company_name) {
 
     console.log(company_to_get)
     // Get company from backend
-    // FUNCTIONAL - USE TEST DATA IN THE MEANTIME
     $.ajax({
         type: 'GET',
         url: 'http://localhost:8080/getCompany',
         data: {
-            "id": company_to_get.id // TODO: Cannot read prop ID of undefined? 
+            "id": company_to_get.id 
         },
         success: function (response) {
             console.log("Company retrieved successfully...")
@@ -159,7 +92,6 @@ function getCompany(company_name) {
             fill_form(JSON.parse(response))
         }
     });
-    // fill_form(TESTDATA)
 }
 
 

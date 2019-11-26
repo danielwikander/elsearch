@@ -3,6 +3,14 @@ var rp = require('request-promise');
 var cred = require('./secrets.json');
 var querystring = require('querystring');
 var path = require('path');
+const { Client } = require('@elastic/elasticsearch')
+const esclient = new Client({
+    node: cred['elastic_url'],
+    auth: {
+        username: cred['elastic_user'],
+        password: cred['elastic_password']
+    }
+})
 
 const app = new express();
 app.use(express.static(path.join(__dirname, 'frontend')));
@@ -19,22 +27,67 @@ app.get('/', async (request, response) => {
 
 
 app.get('/getCompanies', async (request, response) => {
-    console.log("Recieved request for companies:")
-    console.log(request.query.country)
-    console.log(request.query.fulltext)
-    console.log(" ")
     await refresh_token().catch(error => console.log(error))
     let companylist = await get_companies(request.query.country, request.query.fulltext, token).catch((error) => console.log(error))
     await response.json(companylist) //.catch(error => console.log(error))
-    console.log("RETURNED :")
-    console.log(companylist)
 });
 
 app.get('/getCompany', async (request, response) => {
-    await refresh_token().catch(error => console.log(error))
-    let company = await get_company(request.query.id, token).catch((error) => console.log(error))
-    await response.json(company)
+    try {
+        let company = await get_from_elastic(request.query.id).catch((error) => console.log(error))
+        if (company) {
+            await response.json(company)
+        } else {
+            await refresh_token().catch(error => console.log(error))
+            company = await get_company(request.query.id, token).catch((error) => console.log(error))
+            await response.json(company)
+            await add_to_elastic(company).catch((error => console.log(error)))
+        }
+    } catch (error) {
+        console.log("CATCH ERROR")
+        console.log(error)
+    }
 });
+
+const get_from_elastic = async (company_id) => {
+    const { body } = await esclient.search({
+        index: 'company',
+        body: {
+            query: {
+                match: { id: company_id }
+            }
+        }
+    })
+    console.log("RETRIEVED FROM ELASTIC:")
+    console.log(body)
+
+    console.log("elastic length :")
+    console.log(body.hits.hits.length)
+    if (body.hits.hits.length > 0) {
+        for (let i = 0; i < body.hits.hits.length; i++) {
+            console.log(body.hits.hits[i])
+        }
+        console.log("ELASTIC RESOLVED.")
+        Promise.resolve(body)
+    } else {
+        console.log("ELASTIC REJECTED.")
+        Promise.reject()
+    }
+}
+
+const add_to_elastic = async (company) => {
+    console.log("COMPANY TO ADD TO ELASTIC:")
+    var newcomp = {id :1, name: 'test'}
+    console.log(company)
+    console.log("ADDING COMPANY TO ELASTIC")
+    await esclient.index({
+        index: 'company',
+        body: company,
+        id: company.id
+    }), function (err, resp, status) {
+        console.log(resp);
+    }
+}
 
 const get_company = async (id, token) => new Promise((resolve, reject) => {
     params = { id: id }
@@ -52,79 +105,8 @@ const get_company = async (id, token) => new Promise((resolve, reject) => {
     rp(options).then(async (response) => {
         resolve(response)
     }).catch(err => reject(err))
-    // rp(options, function (err, res, body) {
-    //     if (err) 
-    //         reject(err)
-
-    //     // if(res) 
-    //         // console.log(res)
-    //     // console.log(body)
-
-    //     let json = JSON.parse(body);
-    //     console.log(json)
-    //     resolve(json)
-    // });
 });
 
-var TESTDATA = {
-    "$schema": "https://api.bisnode.com/bbc/v2/schemas/company.schema.json",
-    "$lastModified": "2019-05-24T19:07:22.084Z",
-    "name": "Apple Import",
-    "country": {
-        "code": "SE",
-        "name": "Sweden"
-    },
-    "status": {
-        "code": "ST90",
-        "name": "Not yet active"
-    }, "type": {
-        "code": "TY99",
-        "name": "Unknown"
-    },
-    "registrationDate": "1985-11-18",
-    "nationalRegistrationNumber": "5905120316",
-    "vatNo": "SE590512031601",
-    "legalForm": {
-        "code": "JF10",
-        "name": "Propriotorship"
-    },
-    "business": {
-        "activities": {
-            "mainActivity": {
-                "code": "HG0000900",
-                "description": "Main industry unknown"
-            },
-            "subActivities": [],
-            "local": {
-                "mainActivity": {
-                    "code": "HG0000900",
-                    "description": "Unknown"
-                },
-                "subActivities": [
-                    {
-                        "code": "OV990",
-                        "description": "Class unknown"
-                    }
-                ]
-            }
-        },
-        "numberOfEmployees": {
-            "code": "AA99",
-            "name": "Unknown"
-        },
-        "numberOfOfficeEmployees": {
-            "code": "KA01",
-            "name": "0"
-        }
-    },
-    "addressSource": "PARAD, 169 93 Solna, Sweden",
-    "id": "1:102725275",
-    "_links": {
-        "self": {
-            "href": "https://api.bisnode.com/bbc/v2/companies/1:102725275"
-        }
-    }
-}
 
 const get_companies = async (country, inputtext, token) => new Promise((resolve, reject) => {
     const params = { country: country, fulltext: inputtext }
@@ -144,18 +126,6 @@ const get_companies = async (country, inputtext, token) => new Promise((resolve,
     rp(options).then(async (response) => {
         resolve(response)
     }).catch(err => reject(err))
-
-    // request(options, function (err, res, body) {
-    //     if (err) {
-    //         reject(err)
-    //     }
-    //     // if(res) 
-    //         // console.log(res)
-    //     // console.log(body)
-
-    //     let json = JSON.parse(body);
-    //     resolve(json)
-    // });
 });
 
 const get_new_token = async () => new Promise((resolve, reject) => {
@@ -180,21 +150,8 @@ const get_new_token = async () => new Promise((resolve, reject) => {
         console.log(token)
         resolve(token)
     }).catch(error => reject(error))
-    // var new_token;
-    // request.post(options, function (error, response, body) {
-    //     if (error) {
-    //         console.log("GETTOKEN ERROR")
-    //         reject(error)
-    //     }
-    //     console.log(`statusCode: ${response.statusCode}`);
-    //     new_token = JSON.parse(body);
-    //     new_token.expiration_timestamp = Date.now() + new_token['expires_in'];
-    //     token = new_token;
-    //     console.log("GETTOKEN SUCCESS, TOKEN: ")
-    //     console.log(token);
-    //     resolve(token);
-    // });
 });
+
 
 const refresh_token = async () => new Promise((resolve, reject) => {
     if (token === undefined || Date.now() + 6000 <= token.expiration_timestamp)
@@ -202,32 +159,3 @@ const refresh_token = async () => new Promise((resolve, reject) => {
     else
         resolve()
 });
-
-// async function is_token_valid() {
-//     await new Promise((resolve, reject) => {
-//         if (token === undefined || Date.now() + 6000 <= token.expiration_timestamp)
-//             reject()
-//         else 
-//             resolve()
-//     })
-// }
-// async function is_soon_to_be_expired() {
-//     await new Promise((resolve, reject) => {
-//         if (Date.now() + 60000 >= token.expiration_timestamp)
-//             resolve()
-//         else 
-//             reject()
-//     })
-    // if (Date.now() + 60000 >= token.expiration_timestamp)
-    //     await new Promise(resolve, true);
-    //     // return true
-    // await new Promise(reject, false);
-    // // return false
-// }
-
-// const is_soon_to_be_expired = async() => {
-//     // Add time margin to avoid token expiring during call (1 min)
-//     if (Date.now() + 60000 >= token.expiration_timestamp)
-//         return true
-//     return false
-// }

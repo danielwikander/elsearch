@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@elastic/elasticsearch": "^7.4.0",
     "cookie-parser": "^1.4.4",
     "elasticsearch": "^16.5.0",
     "express": "^4.17.1",
