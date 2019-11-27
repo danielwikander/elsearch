@@ -89,7 +89,12 @@ function getCompany(company_name) {
         success: function (response) {
             console.log("Company retrieved successfully...")
             console.log(response)
-            fill_form(JSON.parse(response))
+            try {
+                response = JSON.parse(response)
+            } catch {
+                console.log("already json")
+            }
+            fill_form(response)
         }
     });
 }
