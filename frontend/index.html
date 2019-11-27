@@ -9,7 +9,7 @@
 <body>
 
   <div class="container input-field">
-    <h1>Company Elasticsearch</h1>
+    <h1>Company search</h1>
 
     <div class="row">
       <div class="col s3">
@@ -23,12 +23,16 @@
       </div>
 
       <div class="col s9">
-        <label for="company_name">Company name:</label>
-        <input type="text" id="company_name" class="autocomplete">
+        <label for="company_search">Search company by name:</label>
+        <input type="text" id="company_search" class="autocomplete">
       </div>
     </div>
 
-    <div class="row"><br></div> 
+    <div class="row">
+      <div class="col s12">
+        <h3 id="company_name">nameexample</h>
+      </div>
+    </div> 
 
     <div class="row">
       <div class="col s6">
@@ -73,105 +77,5 @@
         <input disabled type="text" id="number_of_employees"></input>
       </div>
     </div>
-    <button type="submit">Button</button>
-
   </div>
 </body>
-
-<!--<form action="index.html" method="post">
-  <div class="row">
-    <form class="col s12">
-      <div class="row">
-        <div class="input-field col s6">
-            Select A Country
-            <select id="country">
-                <option value="" disabled selected>Choose your option</option>
-                <option value="SE">Sweden</option>
-                <option value="DK">Denmark</option>
-                <option value="NO">Norway</option>
-                <option value="DE">Germany</option>
-              </select>
-              <br>
-          <input placeholder="Company name" id="company_name" type="text" class="autocomplete">
-          <label for="first_name">Company Name</label> 
-        </div>
-        <br>
-        <div class="input-field col s6">
-          <label for="vatNo">Vat No:</label>
-          <input type="text" id="vatNo"></input>   
-          <label for="address">Address:</label>
-          <input type="text" id="address"></input>   
-        </div>
-      </div>
-      <div class="row">
-        <div class="input-field col s12">
-          <input disabled value="I am not editable" id="disabled" type="text" class="validate">
-          <label for="disabled">Disabled</label>
-        </div>
-      </div>
-      <div class="row">
-        <div class="input-field col s12">
-          <input id="password" type="password" class="validate">
-          <label for="password">Password</label>
-        </div>
-      </div>
-      <div class="row">
-        <div class="input-field col s12">
-          <input id="email" type="email" class="validate">
-          <label for="email">Email</label>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col s12">
-          This is an inline input field:
-          <div class="input-field inline">
-            <input id="email_inline" type="email" class="validate">
-            <label for="email_inline">Email</label>
-            <span class="helper-text" data-error="wrong" data-success="right">Helper text</span>
-          </div>
-        </div>
-      </div>
-    </form>
-  </div>
-
-
-  <fieldset class=".input-field">
-    <legend><span class="formlegend">Elasticsearch</span></legend>
-
-    <select id = "country">
-      <option value = "SE">Sweden</option>
-      <option value = "DE">Germany</option>
-      <option value = "NO">Norway</option>
-      <option value = "DK">Denmark</option>
-    </select>
-
-    <label for="company">Company:</label>
-    <input type="text" id="company">
-    <br>
-    <br>
-    <label for="vatNo">VatNo:</label>
-    <input type="text" id="vatNo"></input>   
-    <label for="Address">Address:</label>
-    <input type="text" id="address"></input>   
-    <br>
-    <label for="zipcode">Zipcode:</label>
-    <input type="text" id="zipcode"></input>   
-    <label for="city">City:</label>
-    <input type="text" id="city"></input>   
-    <br>
-    <label for="legal_type">legal_type:</label>
-    <input type="text" id="legal_type"></input>   
-    <label for="turnover">turnover:</label>
-    <input type="text" id="turnover"></input>   
-    <br>
-    <label for="business_type">business_type:</label>
-    <input type="text" id="business_type"></input>   
-    <label for="number_of_employees">number_of_employees:</label>
-    <input type="text" id="number_of_employees"></input>   
-    <br>
-    <button type="submit">Button</button>
-
-  </fieldset>
-
-</form>
--->

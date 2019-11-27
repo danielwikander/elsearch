@@ -57,7 +57,6 @@ app.get('/getCompany', async (request, response) => {
     }
 });
 
-
 const get_company_from_elastic = async (company_id) => {
     try {
         const { body } = await esclient.get({
@@ -68,7 +67,8 @@ const get_company_from_elastic = async (company_id) => {
                 console.log("Company not found in elastic..")
         })
         console.log("Retrieved company from elastic:")
-        console.dir(body._source.name)
+        // console.dir(body._source.name)
+        console.dir(body)
         return body
     } catch (error) {
         let bod = {}

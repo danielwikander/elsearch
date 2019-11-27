@@ -14,9 +14,9 @@ $(document).ready(function () {
     });
 
     // Add eventlistener on textfield for autocomplete
-    document.getElementById('company_name').addEventListener('input', () =>
+    document.getElementById('company_search').addEventListener('input', () =>
         $(function () {
-            if (document.getElementById('company_name').value.length < 4) {
+            if (document.getElementById('company_search').value.length < 4) {
                 current_autocomplete_companies = []
                 return
             }
@@ -28,7 +28,7 @@ $(document).ready(function () {
                 url: 'http://localhost:8080/getCompanies',
                 data: {
                     "country": document.getElementById("country").value,
-                    "fulltext": document.getElementById("company_name").value,
+                    "fulltext": document.getElementById("company_search").value,
                 },
                 success: function (response) {
                     console.log("Response retrieved successfully...")
@@ -46,7 +46,7 @@ $(document).ready(function () {
                     // Create list with only names for autocomplete field
                     if (current_autocomplete_companies.length > 1) {
                         for (let i = 0; i < current_autocomplete_companies.length; i++) {
-                            companies[current_autocomplete_companies[i].name] = null 
+                            companies[current_autocomplete_companies[i].name] = null
                         }
                     }
 
@@ -66,34 +66,28 @@ $(document).ready(function () {
 });
 
 function getCompany(company_name) {
-    // let company_name = document.getElementById('company_name').value;
     var company_to_get;
-    console.log(current_autocomplete_companies)
     for (let i = 0; i < current_autocomplete_companies.length; i++) {
-        console.log(current_autocomplete_companies[i].name)
         if (current_autocomplete_companies[i].name == company_name) {
             company_to_get = current_autocomplete_companies[i];
-            console.log("FOUND MATCH")
             break;
         }
     }
 
     console.log(company_to_get)
-    // Get company from backend
     $.ajax({
         type: 'GET',
         url: 'http://localhost:8080/getCompany',
         data: {
-            "id": company_to_get.id 
+            "id": company_to_get.id
         },
         success: function (response) {
             console.log("Company retrieved successfully...")
-            console.log(response)
+            // console.log(response)
+            // Parse to JSON (catches if already JSON)
             try {
                 response = JSON.parse(response)
-            } catch {
-                console.log("already json")
-            }
+            } catch {}
             fill_form(response)
         }
     });
@@ -102,37 +96,35 @@ function getCompany(company_name) {
 
 
 function fill_form(company) {
+    // Fill the form with values from the retrieved company
     console.log(company)
-    document.getElementById('vatNo').value = company['vatNo'];
-    document.getElementById('address').value = company['addressSource'];
-    // document.getElementById('zipcode').value = company.zipcode; // ?
-    // document.getElementById('city').value = company.city;// ?
-    document.getElementById('legal_type').value = company['legalForm']['name'];
-    // document.getElementById('turnover').value = company.turnover;// ?
-    // document.getElementById('business_type').value = company.business.;// ?
-    document.getElementById('number_of_employees').value = company['business']['numberOfEmployees']['name'];
-}
+    company.name ? 
+        document.getElementById('company_name').innerHTML = company['name'] : document.getElementById('company_name').innerHTML = 'Unknown';
 
+    company.vatNo ? 
+        document.getElementById('vatNo').value = company['vatNo'] : document.getElementById('vatNo').value = 'Unknown';
 
-const searchcountry = async searchBox => {
-    const res = await fetch('../data/countries.json');
-    const countries = await res.json();
+    company.postalAddress && company.postalAddress.address ?
+        document.getElementById('address').value = company.postalAddress.address : document.getElementById('address').value = 'Unknown';
 
-    //Get & Filter Through Entered Data
-    let fits = countries.filter(country => {
-        const regex = new RegExp(`^${searchBox}`, 'gi');
-        return country.name.match(regex) || country.abbr.match(regex);
-    });
+    company.postalAddress && company.postalAddress.zipcode ? 
+        document.getElementById('zipcode').value = company.postalAddress.zipcode : document.getElementById('zipcode').value = 'Unknown';
 
-    //Clears Data If Search Input Field Is Empty
-    if (searchBox.length === 0) {
-        fits = [];
-        countryList.innerHTML = '';
-    }
-    outputHtml(fits);
-};
+    company.postalAddress && company.postalAddress.city ? 
+        document.getElementById('city').value = company.postalAddress.city : document.getElementById('city').value = 'Unknown';
 
+    company.legalForm && company.legalForm.name ? 
+        document.getElementById('legal_type').value = company.legalForm.name : document.getElementById('legal_type').value = 'Unknown';
 
-function fillform(company) {
-    document.getElementById('address').value = company.address
+    company.economy && company.economy.turnover && company.economy.turnover.name ? 
+        document.getElementById('turnover').value = company.economy.turnover.name : document.getElementById('turnover').value = 'Unknown';
+
+    company.economy && company.economy.turnover && company.economy.turnover.name && company.economy.turnover.nameCurrency && document.getElementById('turnover').value != 'Unknown' ? 
+        document.getElementById('turnover').value += " " + company.economy.turnover.nameCurrency : document.getElementById('turnover').value = 'Unknown';
+
+    company.type && company.type.name ? 
+        document.getElementById('business_type').value = company.type.name : document.getElementById('business_type').value = 'Unknown';
+
+    company.business && company.business.numberOfEmployees ? 
+        document.getElementById('number_of_employees').value = company.business.numberOfEmployees.name : document.getElementById('number_of_employees').value = 'Unknown';
 }
