@@ -23,22 +23,25 @@ const server = app.listen(8080, () => {
 app.get('/', async (request, response) => {
     try {
         response.sendFile(path.resolve('./frontend/index.html'));
-        await refresh_token()
+        await refresh_bisnode_token()
     } catch (err) {
         console.log(err)
     }
 });
 
+// Returns a list of companies based on country and free text input.
 app.get('/getCompanies', async (request, response) => {
     try {
-        await refresh_token()
-        companylist = await get_company_list_from_bisnode(request.query.country, request.query.fulltext)//.catch((error) => console.log(error))
+        await refresh_bisnode_token()
+        companylist = await get_company_list_from_bisnode(request.query.country, request.query.fulltext)
         await response.json(companylist)
     } catch (err) {
         console.log(err)
     }
 });
 
+// Returns a company by ID. Checks elastic first, if not found it gets from bisnode.
+// If found in bisnode, adds it to elastic.
 app.get('/getCompany', async (request, response) => {
     try {
         // Searches for company in elastic
@@ -47,7 +50,7 @@ app.get('/getCompany', async (request, response) => {
             await response.json(elastic_response._source)
         } else {
             // If not found in elastic, get from bisnode
-            await refresh_token()
+            await refresh_bisnode_token()
             const bisnode_response = await get_company_from_bisnode(request.query.id)
             await response.json(bisnode_response)
             await add_to_elastic(bisnode_response)
@@ -57,6 +60,7 @@ app.get('/getCompany', async (request, response) => {
     }
 });
 
+// Attempts to get a company from elastic
 const get_company_from_elastic = async (company_id) => {
     try {
         const { body } = await esclient.get({
@@ -66,9 +70,8 @@ const get_company_from_elastic = async (company_id) => {
             if (error.statusCode === 404)
                 console.log("Company not found in elastic..")
         })
-        console.log("Retrieved company from elastic:")
-        // console.dir(body._source.name)
-        console.dir(body)
+        console.log("Retrieved " + body._source.name + " from elastic...")
+        // console.dir(body)
         return body
     } catch (error) {
         let bod = {}
@@ -77,10 +80,10 @@ const get_company_from_elastic = async (company_id) => {
     }
 }
 
+// Adds a company to elastic
 const add_to_elastic = async (company) => {
     company = JSON.parse(company)
-    console.log("ADDING COMPANY TO ELASTIC:")
-    console.dir(company.name)
+    console.log("Adding " + company.name + " to elastic...")
     await esclient.create({
         index: 'company',
         id: company.id,
@@ -89,6 +92,7 @@ const add_to_elastic = async (company) => {
     }) 
 }
 
+// Gets a specific company from bisnode
 const get_company_from_bisnode = async (id) => {
     params = { id: id }
     url = `https://api.bisnode.com/bbc/v2/companies/${id}`;
@@ -106,6 +110,7 @@ const get_company_from_bisnode = async (id) => {
     })
 }
 
+// Gets a list of companies from bisnode
 const get_company_list_from_bisnode = async (country, inputtext) => {
     const params = { country: country, fulltext: inputtext }
     const paramString = new URLSearchParams(params)
@@ -125,7 +130,8 @@ const get_company_list_from_bisnode = async (country, inputtext) => {
     })
 }
 
-const get_new_token = async () => new Promise((resolve, reject) => {
+// Gets a new bisnode API token
+const get_new_bisnode_token = async () => new Promise((resolve, reject) => {
     let body = querystring.stringify({
         "grant_type": cred['grant_type'],
         "scope": cred['scope'],
@@ -151,14 +157,8 @@ const get_new_token = async () => new Promise((resolve, reject) => {
     }).catch(error => reject(error))
 });
 
-const refresh_token = async () => {
-    if (token === undefined || Date.now() + 6000 <= token.expiration_timestamp)
-        await get_new_token()
+// Check if a bisnode token exists, and if it is valid. If not, retrieves a new token. 
+const refresh_bisnode_token = async () => {
+    if ((token === undefined || Date.now() + 6000 <= token.expiration_timestamp))
+        await get_new_bisnode_token()
 }
-
-// const refresh_token = async () => new Promise((resolve, reject) => {
-//     if (token === undefined || Date.now() + 6000 <= token.expiration_timestamp)
-//         get_new_token().then(resolve()).catch(reject(reason))
-//     else
-//         resolve()
-// });

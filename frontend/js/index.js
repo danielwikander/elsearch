@@ -4,7 +4,6 @@ $(document).ready(function () {
     // Add autocomplete element 
     var elem = document.querySelector('.autocomplete');
     var instance = M.Autocomplete.init(elem, {});
-
     $('input.autocomplete').autocomplete({
         data: {},
         limit: 5,
@@ -32,17 +31,13 @@ $(document).ready(function () {
                 },
                 success: function (response) {
                     console.log("Response retrieved successfully...")
-                    // current_autocomplete_companies = response.companies
                     var companies = {}
 
                     // Add response to companylist
                     for (var i = 0; i < response.companies.length; i++) {
-                        console.log("adding company to list...")
                         current_autocomplete_companies.push(response.companies[i])
                     }
 
-                    console.log("current autocomplete:")
-                    console.log(current_autocomplete_companies)
                     // Create list with only names for autocomplete field
                     if (current_autocomplete_companies.length > 1) {
                         for (let i = 0; i < current_autocomplete_companies.length; i++) {
@@ -51,7 +46,6 @@ $(document).ready(function () {
                     }
 
                     $('input.autocomplete').autocomplete("updateData", companies);
-                    console.log("updated autocomplete...")
                     var elem = document.querySelector('.autocomplete');
                     var instance = M.Dropdown.getInstance(elem);
                     if (instance) {
@@ -65,6 +59,7 @@ $(document).ready(function () {
     );
 });
 
+// Get specific company by name
 function getCompany(company_name) {
     var company_to_get;
     for (let i = 0; i < current_autocomplete_companies.length; i++) {
@@ -74,7 +69,6 @@ function getCompany(company_name) {
         }
     }
 
-    console.log(company_to_get)
     $.ajax({
         type: 'GET',
         url: 'http://localhost:8080/getCompany',
@@ -93,11 +87,8 @@ function getCompany(company_name) {
     });
 }
 
-
-
+// Fill the form with values from the retrieved company
 function fill_form(company) {
-    // Fill the form with values from the retrieved company
-    console.log(company)
     company.name ? 
         document.getElementById('company_name').innerHTML = company['name'] : document.getElementById('company_name').innerHTML = 'Unknown';
 
