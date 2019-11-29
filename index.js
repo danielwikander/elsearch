@@ -33,7 +33,7 @@ app.get('/', async (request, response) => {
 app.get('/getCompanies', async (request, response) => {
     try {
         await refresh_bisnode_token()
-        companylist = await get_company_list_from_bisnode(request.query.country, request.query.fulltext)
+        companylist = await get_company_list_from_bisnode(request.query.country, request.query.companyLegalName)
         await response.json(companylist)
     } catch (err) {
         console.log(err)
@@ -111,8 +111,8 @@ const get_company_from_bisnode = async (id) => {
 }
 
 // Gets a list of companies from bisnode
-const get_company_list_from_bisnode = async (country, inputtext) => {
-    const params = { country: country, fulltext: inputtext }
+const get_company_list_from_bisnode = async (country, company_name) => {
+    const params = { country: country, companyLegalName: company_name, maxSize: 25 }
     const paramString = new URLSearchParams(params)
     url = `https://api.bisnode.com/bbc/v2/companies?${paramString.toString()}`;
     const options = {

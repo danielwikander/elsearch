@@ -21,6 +21,7 @@ $(document).ready(function () {
             if (document.getElementById('company_search').value.length < 4) {
                 if(document.getElementById('company_search').value.length == 0) {
                     current_autocomplete_companies.clear()
+                    $('input.autocomplete').autocomplete("updateData", {});
                 }
                 return
             }
@@ -31,7 +32,7 @@ $(document).ready(function () {
                 url: 'http://localhost:8080/getCompanies',
                 data: {
                     "country": document.getElementById("country").value,
-                    "fulltext": document.getElementById("company_search").value,
+                    "companyLegalName": document.getElementById("company_search").value,
                 },
                 success: function (response) {
                     console.log("Response retrieved successfully...")
