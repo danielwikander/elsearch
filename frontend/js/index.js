@@ -1,6 +1,9 @@
-var current_autocomplete_companies = []
+var current_autocomplete_companies_old = []
+var current_autocomplete_companies;
 
 $(document).ready(function () {
+    current_autocomplete_companies = new Map();
+
     // Add autocomplete element 
     var elem = document.querySelector('.autocomplete');
     var instance = M.Autocomplete.init(elem, {});
@@ -16,12 +19,13 @@ $(document).ready(function () {
     document.getElementById('company_search').addEventListener('input', () =>
         $(function () {
             if (document.getElementById('company_search').value.length < 4) {
-                current_autocomplete_companies = []
+                if(document.getElementById('company_search').value.length == 0) {
+                    current_autocomplete_companies.clear()
+                }
                 return
             }
 
             // Request companies from backend
-            console.log("Making get request..")
             $.ajax({
                 type: 'GET',
                 url: 'http://localhost:8080/getCompanies',
@@ -31,17 +35,19 @@ $(document).ready(function () {
                 },
                 success: function (response) {
                     console.log("Response retrieved successfully...")
-                    var companies = {}
 
                     // Add response to companylist
                     for (var i = 0; i < response.companies.length; i++) {
-                        current_autocomplete_companies.push(response.companies[i])
+                        if (!current_autocomplete_companies.has(response.companies[i].name)) {
+                            current_autocomplete_companies.set(response.companies[i].name, response.companies[i])
+                        }
                     }
 
                     // Create list with only names for autocomplete field
-                    if (current_autocomplete_companies.length > 1) {
-                        for (let i = 0; i < current_autocomplete_companies.length; i++) {
-                            companies[current_autocomplete_companies[i].name] = null
+                    var companies = {}
+                    if (current_autocomplete_companies.size > 0) {
+                        for (var company of current_autocomplete_companies.values()) {
+                            companies[company.name] = null
                         }
                     }
 
@@ -61,14 +67,7 @@ $(document).ready(function () {
 
 // Get specific company by name
 function getCompany(company_name) {
-    var company_to_get;
-    for (let i = 0; i < current_autocomplete_companies.length; i++) {
-        if (current_autocomplete_companies[i].name == company_name) {
-            company_to_get = current_autocomplete_companies[i];
-            break;
-        }
-    }
-
+    var company_to_get = current_autocomplete_companies.get(company_name)
     $.ajax({
         type: 'GET',
         url: 'http://localhost:8080/getCompany',
@@ -81,7 +80,7 @@ function getCompany(company_name) {
             // Parse to JSON (catches if already JSON)
             try {
                 response = JSON.parse(response)
-            } catch {}
+            } catch { }
             fill_form(response)
         }
     });
@@ -89,33 +88,33 @@ function getCompany(company_name) {
 
 // Fill the form with values from the retrieved company
 function fill_form(company) {
-    company.name ? 
+    company.name ?
         document.getElementById('company_name').innerHTML = company['name'] : document.getElementById('company_name').innerHTML = 'Unknown';
 
-    company.vatNo ? 
+    company.vatNo ?
         document.getElementById('vatNo').value = company['vatNo'] : document.getElementById('vatNo').value = 'Unknown';
 
     company.postalAddress && company.postalAddress.address ?
         document.getElementById('address').value = company.postalAddress.address : document.getElementById('address').value = 'Unknown';
 
-    company.postalAddress && company.postalAddress.zipcode ? 
+    company.postalAddress && company.postalAddress.zipcode ?
         document.getElementById('zipcode').value = company.postalAddress.zipcode : document.getElementById('zipcode').value = 'Unknown';
 
-    company.postalAddress && company.postalAddress.city ? 
+    company.postalAddress && company.postalAddress.city ?
         document.getElementById('city').value = company.postalAddress.city : document.getElementById('city').value = 'Unknown';
 
-    company.legalForm && company.legalForm.name ? 
+    company.legalForm && company.legalForm.name ?
         document.getElementById('legal_type').value = company.legalForm.name : document.getElementById('legal_type').value = 'Unknown';
 
-    company.economy && company.economy.turnover && company.economy.turnover.name ? 
+    company.economy && company.economy.turnover && company.economy.turnover.name ?
         document.getElementById('turnover').value = company.economy.turnover.name : document.getElementById('turnover').value = 'Unknown';
 
-    company.economy && company.economy.turnover && company.economy.turnover.name && company.economy.turnover.nameCurrency && document.getElementById('turnover').value != 'Unknown' ? 
+    company.economy && company.economy.turnover && company.economy.turnover.name && company.economy.turnover.nameCurrency && document.getElementById('turnover').value != 'Unknown' ?
         document.getElementById('turnover').value += " " + company.economy.turnover.nameCurrency : document.getElementById('turnover').value = 'Unknown';
 
-    company.type && company.type.name ? 
+    company.type && company.type.name ?
         document.getElementById('business_type').value = company.type.name : document.getElementById('business_type').value = 'Unknown';
 
-    company.business && company.business.numberOfEmployees ? 
+    company.business && company.business.numberOfEmployees ?
         document.getElementById('number_of_employees').value = company.business.numberOfEmployees.name : document.getElementById('number_of_employees').value = 'Unknown';
 }

@@ -152,7 +152,6 @@ const get_new_bisnode_token = async () => new Promise((resolve, reject) => {
         token.expiration_timestamp = Date.now() + body['expires_in']
         // console.log("New bisnode token:")
         // console.log(token)
-        // return token
         resolve(token)
     }).catch(error => reject(error))
 });
