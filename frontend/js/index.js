@@ -17,7 +17,7 @@ $(document).ready(function () {
     // Add eventlistener on textfield for autocomplete
     document.getElementById('company_search').addEventListener('input', () =>
         $(function () {
-            if (document.getElementById('company_search').value.length < 4) {
+            if (document.getElementById('company_search').value.length < 3) {
                 if(document.getElementById('company_search').value.length == 0) {
                     current_autocomplete_companies.clear()
                     $('input.autocomplete').autocomplete("updateData", {})
