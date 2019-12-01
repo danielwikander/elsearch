@@ -1,8 +1,8 @@
-const express = require('express');
-var rp = require('request-promise');
-var cred = require('./secrets.json');
-var querystring = require('querystring');
-var path = require('path');
+const express = require('express')
+var rp = require('request-promise')
+var cred = require('./secrets.json')
+var querystring = require('querystring')
+var path = require('path')
 const { Client } = require('@elastic/elasticsearch')
 const esclient = new Client({
     node: cred['elastic_url'],
@@ -12,17 +12,17 @@ const esclient = new Client({
     }
 })
 
-const app = new express();
-app.use(express.static(path.join(__dirname, 'frontend')));
-let token;
+const app = new express()
+app.use(express.static(path.join(__dirname, 'frontend')))
+let token
 
 const server = app.listen(8080, () => {
-    console.log(`Express running → PORT ${server.address().port}`);
+    console.log(`Express running → PORT ${server.address().port}`)
 });
 
 app.get('/', async (request, response) => {
     try {
-        response.sendFile(path.resolve('./frontend/index.html'));
+        response.sendFile(path.resolve('./frontend/index.html'))
         await refresh_bisnode_token()
     } catch (err) {
         console.log(err)
@@ -106,7 +106,7 @@ const get_company_from_bisnode = async (id) => {
         }
     }
     return await rp(options).then(async (response) => {
-        return response;
+        return response
     })
 }
 
@@ -114,7 +114,7 @@ const get_company_from_bisnode = async (id) => {
 const get_company_list_from_bisnode = async (country, company_name) => {
     const params = { country: country, companyLegalName: company_name, maxSize: 25 }
     const paramString = new URLSearchParams(params)
-    url = `https://api.bisnode.com/bbc/v2/companies?${paramString.toString()}`;
+    url = `https://api.bisnode.com/bbc/v2/companies?${paramString.toString()}`
     const options = {
         url: url,
         method: 'GET',

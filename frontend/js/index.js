@@ -1,12 +1,11 @@
-var current_autocomplete_companies_old = []
 var current_autocomplete_companies;
 
 $(document).ready(function () {
-    current_autocomplete_companies = new Map();
+    current_autocomplete_companies = new Map()
 
     // Add autocomplete element 
-    var elem = document.querySelector('.autocomplete');
-    var instance = M.Autocomplete.init(elem, {});
+    var elem = document.querySelector('.autocomplete')
+    var instance = M.Autocomplete.init(elem, {})
     $('input.autocomplete').autocomplete({
         data: {},
         limit: 5,
@@ -21,7 +20,7 @@ $(document).ready(function () {
             if (document.getElementById('company_search').value.length < 4) {
                 if(document.getElementById('company_search').value.length == 0) {
                     current_autocomplete_companies.clear()
-                    $('input.autocomplete').autocomplete("updateData", {});
+                    $('input.autocomplete').autocomplete("updateData", {})
                 }
                 return
             }
@@ -52,13 +51,13 @@ $(document).ready(function () {
                         }
                     }
 
-                    $('input.autocomplete').autocomplete("updateData", companies);
-                    var elem = document.querySelector('.autocomplete');
-                    var instance = M.Dropdown.getInstance(elem);
+                    $('input.autocomplete').autocomplete("updateData", companies)
+                    var elem = document.querySelector('.autocomplete')
+                    var instance = M.Dropdown.getInstance(elem)
                     if (instance) {
                         if (!instance.isOpen)
-                            instance.open();
-                        instance.recalculateDimensions();
+                            instance.open()
+                        instance.recalculateDimensions()
                     }
                 }
             });
